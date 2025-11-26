@@ -1,6 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { Enrollment } from '../enrollment/enrollment.entity';
 
-@Entity('courses')
+@Entity()
 export class Course {
   @PrimaryGeneratedColumn()
   id: number;
@@ -8,14 +9,18 @@ export class Course {
   @Column()
   name: string;
 
-  @Column()
-  description: string;
+  @Column({ nullable: true })
+  description?: string;
 
-  @Column()
+  @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 
   @Column({ default: true })
   active: boolean;
-  
-  enrollments: any;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @OneToMany(() => Enrollment, (enrollment) => enrollment.course)
+  enrollments: Enrollment[];
 }
