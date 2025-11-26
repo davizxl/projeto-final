@@ -16,4 +16,6 @@ export class Course {
 
   @Column({ default: true })
   active: boolean;
+  
+  enrollments: any;
 }
