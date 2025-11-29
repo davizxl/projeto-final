@@ -7,9 +7,6 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 
 @Injectable()
 export class CoursesService {
-  remove(id: number) {
-      throw new Error('Method not implemented.');
-  }
   constructor(
     @InjectRepository(Course)
     private coursesRepository: Repository<Course>,
@@ -23,31 +20,25 @@ export class CoursesService {
 
   create(dto: CreateCourseDto) {
     const course = this.coursesRepository.create(dto);
+    course.active = true;
     return this.coursesRepository.save(course);
   }
 
   async update(id: number, dto: UpdateCourseDto) {
-    const course = await this.coursesRepository.findOne({
-      where: { id },
-    });
-
+    const course = await this.coursesRepository.findOne({ where: { id } });
     if (!course) {
       throw new NotFoundException('Curso não encontrado');
     }
-
     Object.assign(course, dto);
     return this.coursesRepository.save(course);
   }
 
-  async delete(id: number) {
-    const course = await this.coursesRepository.findOne({
-      where: { id },
-    });
 
+  async remove(id: number) {
+    const course = await this.coursesRepository.findOne({ where: { id } });
     if (!course) {
       throw new NotFoundException('Curso não encontrado');
     }
-
     course.active = false;
     return this.coursesRepository.save(course);
   }

@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
 import { Course } from './course/course.entity';
 import { Enrollment } from './enrollment/enrollment.entity';
 import { Collaborator } from './collaborator/collaborator.entity';
+import { CollaboratorModule } from './collaborator/collaborator.module';
+import { CoursesModule } from './course/courses.module';
+import { EnrollmentModule } from './enrollment/enrollment.module';
+import { AuthModule } from './auth/auth.module';
 
-// (adicione aqui módulos de feature quando existirem, p.ex. CoursesModule)
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -17,7 +19,7 @@ import { Collaborator } from './collaborator/collaborator.entity';
       useFactory: (config: ConfigService) => ({
         type: 'mysql',
         host: config.get<string>('DB_HOST') ?? 'localhost',
-        port: config.get<number>('DB_PORT') ?? 3306,
+        port: config.get<number>('DB_PORT') ? Number(config.get<number>('DB_PORT')) : 3306,
         username: config.get<string>('DB_USER') ?? 'root',
         password: config.get<string>('DB_PASS') ?? '',
         database: config.get<string>('DB_NAME') ?? 'projeto_escolamari',
@@ -26,6 +28,11 @@ import { Collaborator } from './collaborator/collaborator.entity';
         logging: ['error', 'schema', 'warn'],
       }),
     }),
+
+    CollaboratorModule,
+    CoursesModule,
+    EnrollmentModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

@@ -1,4 +1,3 @@
-
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -20,44 +19,33 @@ export class EnrollmentService {
     @InjectRepository(Collaborator)
     private collaboratorRepo: Repository<Collaborator>,
   ) {}
- 
+
   async create(dto: CreateEnrollmentDto) {
-    
     const course = await this.courseRepo.findOne({ where: { id: dto.courseId } });
-    if (!course || (course as any).active === false) {
+    if (!course || course.active === false) {
       throw new BadRequestException('Curso inexistente ou inativo');
     }
 
-
     let collaborator: Collaborator | null = null;
-    if ((dto as any).collaboratorId) {
-      collaborator = await this.collaboratorRepo.findOne({
-        where: { id: (dto as any).collaboratorId },
-      });
-
-      if (!collaborator) {
-        throw new NotFoundException('Colaborador não encontrado');
-      }
+    if (dto.collaboratorId) {
+      collaborator = await this.collaboratorRepo.findOne({ where: { id: dto.collaboratorId } });
+      if (!collaborator) throw new NotFoundException('Colaborador não encontrado');
     }
 
-    
     const payload: Partial<Enrollment> = {
-      studentName: (dto as any).studentName,
-      studentEmail: (dto as any).studentEmail,
-      studentCpf: (dto as any).studentCpf,
-      studentPhone: (dto as any).studentPhone,
-      birthDate: (dto as any).birthDate,
+      studentName: dto.studentName,
+      studentEmail: dto.studentEmail,
+      studentCpf: dto.studentCpf,
+      studentPhone: dto.studentPhone,
+      birthDate: dto.birthDate,
       course,
     };
 
     if (collaborator) payload.collaborator = collaborator;
 
-    if ((dto as any).enrollmentDate) {
-      const maybeDate = new Date((dto as any).enrollmentDate);
-      if (!Number.isNaN(maybeDate.getTime())) {
-       
-        payload.enrollmentDate = maybeDate;
-      }
+    if (dto.enrollmentDate) {
+      const maybeDate = new Date(dto.enrollmentDate);
+      if (!Number.isNaN(maybeDate.getTime())) payload.enrollmentDate = maybeDate;
     }
 
     const enrollment = this.repository.create(payload);
@@ -67,12 +55,8 @@ export class EnrollmentService {
       id: saved.id,
       studentName: saved.studentName,
       studentCpf: saved.studentCpf,
-      courseId: saved.course?.id,
-      createdAt:
-      
-        (saved as any).createdAt?.toISOString() ||
-        (saved as any).enrollmentDate?.toISOString() ||
-        new Date().toISOString(),
+      courseId: (saved.course as Course).id,
+      createdAt: (saved.createdAt || saved.enrollmentDate || new Date()).toISOString(),
     };
   }
 
@@ -82,6 +66,16 @@ export class EnrollmentService {
 
   findOne(id: number) {
     return this.repository.findOne({ where: { id }, relations: ['course', 'collaborator'] });
+  }
+
+  async findByCourse(courseId: number) {
+    return this.repository
+      .createQueryBuilder('e')
+      .leftJoinAndSelect('e.course', 'course')
+      .leftJoinAndSelect('e.collaborator', 'collaborator')
+      .where('course.id = :courseId', { courseId })
+      .orderBy('e.createdAt', 'DESC')
+      .getMany();
   }
 
   update(id: number, dto: UpdateEnrollmentDto) {

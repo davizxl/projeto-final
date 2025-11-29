@@ -1,34 +1,48 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, ParseIntPipe, Patch, Delete } from '@nestjs/common';
 import { EnrollmentService } from './enrollment.service';
 import { CreateEnrollmentDto } from './create-enrollment.dto';
 import { UpdateEnrollmentDto } from './update-enrollment.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('enrollments')
+@Controller()
 export class EnrollmentController {
   constructor(private readonly service: EnrollmentService) {}
 
-  @Post()
+
+  @Post('enrollments')
   create(@Body() dto: CreateEnrollmentDto) {
     return this.service.create(dto);
   }
 
-  @Get()
+ 
+  @UseGuards(JwtAuthGuard)
+  @Get('enrollments')
   findAll() {
     return this.service.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(+id);
+  @UseGuards(JwtAuthGuard)
+  @Get('enrollments/:id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateEnrollmentDto) {
-    return this.service.update(+id, dto);
+
+  @UseGuards(JwtAuthGuard)
+  @Get('courses/:id/enrollments')
+  findByCourse(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findByCourse(id);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.service.remove(+id);
+  @UseGuards(JwtAuthGuard)
+  @Patch('enrollments/:id')
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateEnrollmentDto) {
+    return this.service.update(id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('enrollments/:id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.service.remove(id);
   }
 }
